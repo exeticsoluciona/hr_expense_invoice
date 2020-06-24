@@ -15,6 +15,7 @@ class HrExpense(models.Model):
             self.quantity = 1
             self.unit_amount = self.factura_id.amount_total
             self.reference = self.factura_id.name
+            self.tax_ids = [(5, False, False)]
 
     def _get_account_move_line_values(self):
         result = super(HrExpense, self)._get_account_move_line_values()
