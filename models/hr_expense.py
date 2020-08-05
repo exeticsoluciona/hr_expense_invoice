@@ -35,13 +35,12 @@ class HrExpenseSheet(models.Model):
     def paid_expense_sheets(self):
         result = super(HrExpenseSheet, self).paid_expense_sheets()
 
-        logging.warn('paid_expense_sheets')
         for linea_gasto in self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
             for linea_factura in self.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
                 if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( linea_gasto.debit == linea_factura.credit or linea_gasto.credit - linea_factura.debit ):
 
-                    logging.warn(linea_gasto | linea_factura)
                     (linea_gasto | linea_factura).reconcile()
+                    break
 
 class HrExpenseSheetRegisterPaymentWizard(models.TransientModel):
     _inherit = 'hr.expense.sheet.register.payment.wizard'
@@ -55,5 +54,6 @@ class HrExpenseSheetRegisterPaymentWizard(models.TransientModel):
             for linea_factura in sheet.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
                 if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( linea_gasto.debit == linea_factura.credit or linea_gasto.credit - linea_factura.debit ):
                     (linea_gasto | linea_factura).reconcile()
+                    break
 
         return super(HrExpenseSheetRegisterPaymentWizard, self).expense_post_payment()
