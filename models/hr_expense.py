@@ -8,7 +8,7 @@ import logging
 class HrExpense(models.Model):
     _inherit = 'hr.expense'
 
-    factura_id = fields.Many2one('account.move', string="Factura", domain="[('state','=','posted'), ('invoice_date', '!=', False)]", readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)], 'refused': [('readonly', False)]}, check_company=True)
+    factura_id = fields.Many2one('account.invoice', string="Factura", domain="[('state','=','open'), ('type', '=', 'in_invoice')]", readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)], 'refused': [('readonly', False)]})
 
     @api.onchange('factura_id')
     def _onchange_factura_id(self):
@@ -36,7 +36,7 @@ class HrExpenseSheet(models.Model):
         res = super(HrExpenseSheet, self).action_sheet_move_create()
 
         for linea_gasto in self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-            for linea_factura in self.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
+            for linea_factura in self.expense_line_ids.factura_id.move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
                 if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( linea_gasto.debit == linea_factura.credit or linea_gasto.credit - linea_factura.debit ):
 
                     (linea_gasto | linea_factura).reconcile()
