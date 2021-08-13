@@ -32,8 +32,8 @@ class HrExpense(models.Model):
 class HrExpenseSheet(models.Model):
     _inherit = 'hr.expense.sheet'
 
-    def action_sheet_move_create(self):
-        res = super(HrExpenseSheet, self).action_sheet_move_create()
+    def set_to_paid(self):
+        res = super(HrExpenseSheet, self).set_to_paid()
 
         for linea_gasto in self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
             for linea_factura in self.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
