@@ -30,33 +30,23 @@ class HrExpense(models.Model):
                         line['partner_id'] = expense.factura_id.partner_id.id
         return result
     
-if version_info[0] == 13:
-    class HrExpenseSheetRegisterPaymentWizard(models.TransientModel):
-        _inherit = 'hr.expense.sheet.register.payment.wizard'
+class HrExpenseSheet(models.Model):
+    _inherit = 'hr.expense.sheet'
+    
+    # Evitar que se marque como pagado cuando se concilia la factura
+    def set_to_paid(self):
+        pendientes = self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled)
+        if len(pendientes) == 0:
+            self.write({'state': 'done'})
 
-        def expense_post_payment(self):
-            context = dict(self._context or {})
-            active_ids = context.get('active_ids', [])
-            sheet = self.env['hr.expense.sheet'].browse(active_ids)
+    def action_sheet_move_create(self):
+        res = super(HrExpenseSheet, self).action_sheet_move_create()
 
-            for linea_gasto in sheet.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-                for linea_factura in sheet.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-                    if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( linea_gasto.debit == linea_factura.credit or linea_gasto.credit - linea_factura.debit ):
-                        (linea_gasto | linea_factura).reconcile()
-                        break
+        for linea_gasto in self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
+            for linea_factura in self.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
+                if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( linea_gasto.debit == linea_factura.credit or linea_gasto.credit - linea_factura.debit ):
+                    (linea_gasto | linea_factura).reconcile()
+                    break
 
-            return super(HrExpenseSheetRegisterPaymentWizard, self).expense_post_payment()
-
-if version_info[0] == 14:
-    class HrExpenseSheet(models.Model):
-        _inherit = 'hr.expense.sheet'
-
-        def action_sheet_move_create(self):
-            res = super(HrExpenseSheet, self).action_sheet_move_create()
-
-            for linea_gasto in self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-                for linea_factura in self.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-                    if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( linea_gasto.debit == linea_factura.credit or linea_gasto.credit - linea_factura.debit ):
-                        (linea_gasto | linea_factura).reconcile()
-                        break
+        return res
 
