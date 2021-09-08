@@ -14,7 +14,13 @@ class AccountMove(models.Model):
         for f in self:
             anteriores = Expense.search([('factura_id','=',f.id)])
             
-            if f.state == 'posted' and f.invoice_date and len(anteriores) == 0:
+            if len(anteriores) == 0:
+                raise ValidationError('La factura {} ya fue utilizada en otro gasto, no se puede utilizar en otro gasto.'.format(f.name))
+                
+            if not f.invoice_user_id.employee_id:
+                raise ValidationError('Su usuario no tiene un empleado asignado; sin empleado, no se puede crear un gasto.')
+            
+            if f.state == 'posted' and f.invoice_date:
                 productos = self.env['product.product'].search([('can_be_expensed', '=', True), '|', ('company_id', '=', False), ('company_id', '=', f.company_id.id)])
                 
                 values = {
