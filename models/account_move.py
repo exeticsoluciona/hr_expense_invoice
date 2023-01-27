@@ -31,6 +31,7 @@ class AccountMove(models.Model):
                     'product_id': productos[0].id,
                     'unit_amount': 0,
                     'product_uom_id': self.env['uom.uom'].search([], limit=1, order='id').id,
+                    'currency_id': f.currency_id.id
                 };
                 
                 exp = Expense.create(values);
