@@ -2,8 +2,8 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import float_is_zero
 
-from odoo.release import version_info
 import logging
 
 class HrExpense(models.Model):
@@ -42,10 +42,11 @@ class HrExpenseSheet(models.Model):
 
     def action_sheet_move_create(self):
         res = super(HrExpenseSheet, self).action_sheet_move_create()
+        rounding = self.company_id.currency_id.rounding
 
         for linea_gasto in self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
             for linea_factura in self.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-                if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( linea_gasto.debit == linea_factura.credit or linea_gasto.credit - linea_factura.debit ):
+                if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( float_is_zero(linea_gasto.debit - linea_factura.credit, precision_rounding=rounding) or float_is_zero(linea_gasto.credit - linea_factura.debit, precision_rounding=rounding) ):
                     (linea_gasto | linea_factura).reconcile()
                     break
 
