@@ -16,7 +16,7 @@ class AccountMove(models.Model):
                 anteriores = Expense.search([('factura_id','=',f.id)])
             
                 if len(anteriores) > 0:
-                    raise ValidationError('La factura {} ya fue utilizada en otro gasto, no se puede utilizar en otro gasto.'.format(f.name))
+                    raise ValidationError('La factura {} ya fue utilizada en otro gasto, no puede ser utilizada dos veces.'.format(f.name))
                 
                 productos = self.env['product.product'].search([('can_be_expensed', '=', True), '|', ('company_id', '=', False), ('company_id', '=', f.company_id.id)])
                 
@@ -30,6 +30,7 @@ class AccountMove(models.Model):
                     'factura_id': f.id,
                     'product_id': productos[0].id,
                     'unit_amount': 0,
+                    'total_amount': 0,
                     'product_uom_id': self.env['uom.uom'].search([], limit=1, order='id').id,
                     'currency_id': f.currency_id.id
                 };

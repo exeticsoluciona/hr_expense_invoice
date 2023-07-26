@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-from odoo import models, fields, api, _
+from odoo import api, fields, Command, models, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_is_zero
 
@@ -14,9 +14,9 @@ class HrExpense(models.Model):
     @api.onchange('factura_id')
     def _onchange_factura_id(self):
         if self.factura_id:
-            self.account_id = self.factura_id.partner_id.property_account_payable_id
             self.quantity = 1
             self.unit_amount = self.factura_id.amount_total
+            self.total_amount = self.factura_id.amount_total
             self.reference = self.factura_id.name
             self.tax_ids = [(5, False, False)]
             self.currency_id = self.factura_id.currency_id
@@ -34,21 +34,60 @@ class HrExpense(models.Model):
 class HrExpenseSheet(models.Model):
     _inherit = 'hr.expense.sheet'
     
+    def es_pagable(self, cuenta):
+        if 'user_type_id' in cuenta.fields_get():
+            return True if cuenta.user_type_id.type == 'payable' else False
+        else:
+            return True if cuenta.account_type == 'liability_payable' else False
+    
     # Evitar que se marque como pagado cuando se concilia la factura
     def set_to_paid(self):
-        pendientes = self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled)
+        pendientes = self.account_move_id.line_ids.filtered(lambda r: self.es_pagable(r.account_id) and not r.reconciled)
         if len(pendientes) == 0:
             self.write({'state': 'done'})
 
     def action_sheet_move_create(self):
         res = super(HrExpenseSheet, self).action_sheet_move_create()
         rounding = self.company_id.currency_id.rounding
+        
+        lineas_por_pagar = self.expense_line_ids.factura_id.line_ids.filtered(lambda r: self.es_pagable(r.account_id) and not r.reconciled)
+        gastos = self.expense_line_ids
 
-        for linea_gasto in self.account_move_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-            for linea_factura in self.expense_line_ids.factura_id.line_ids.filtered(lambda r: r.account_id.user_type_id.type == 'payable' and not r.reconciled):
-                if linea_gasto.partner_id.id == linea_factura.partner_id.id and ( float_is_zero(linea_gasto.debit - linea_factura.credit, precision_rounding=rounding) or float_is_zero(linea_gasto.credit - linea_factura.debit, precision_rounding=rounding) ):
-                    (linea_gasto | linea_factura).reconcile()
-                    break
+        lineas = []
+        for p in lineas_por_pagar:
+            lineas.append(Command.create({
+                'name': p.name,
+                'ref': p.ref,
+                'partner_id': p.partner_id.id,
+                'debit': p.credit,
+                'credit': 0,
+                'account_id': p.account_id.id,
+            }))
+
+        for g in gastos:
+            lineas.append(Command.create({
+                'name': g.name,
+                'ref': g.reference,
+                'partner_id': g.employee_id.sudo().address_home_id.commercial_partner_id.id,
+                'debit': 0,
+                'credit': g.total_amount,
+                'account_id': g.account_id.id,
+            }))
+
+        diario = self.env['account.journal'].search([('type','=','general')])
+        movimiento = self.env['account.move'].create({
+            'journal_id': diario[0].id,
+            'date': self.accounting_date,
+            'ref': 'Conciliacion manual: '+self.name,
+            'move_type': 'entry',
+            'line_ids': lineas
+        })
+        movimiento._post()
+        
+        i = 0
+        for l in lineas_por_pagar:
+            (l | movimiento.line_ids[i]).reconcile()
+            i += 1
 
         return res
 
