@@ -10,6 +10,7 @@ class AccountMove(models.Model):
     
     def crear_gasto(self, empleado_id):
         Expense = self.env['hr.expense']
+        resultado = self.env['hr.expense']
         
         for f in self:
             if f.state == 'posted' and f.invoice_date:
@@ -37,6 +38,10 @@ class AccountMove(models.Model):
                 
                 exp = Expense.create(values);
                 exp._onchange_factura_id()
+                resultado |= exp
+
+        return resultado
+
             
 class HRExpenseInvoiceCrearGasto(models.TransientModel):
     _name = 'hr.expense.invoice.crear_gasto'
@@ -48,4 +53,12 @@ class HRExpenseInvoiceCrearGasto(models.TransientModel):
         active_ids = self.env.context.get('active_ids')
 
         for f in self.env['account.move'].browse(active_ids):
-            f.crear_gasto(self.empleado_id.id)
+            exp = f.crear_gasto(self.empleado_id.id)
+
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'hr.expense',
+                'view_mode': 'form',
+                'res_id': exp.id,
+                'views': [(False, 'form')],
+            }
