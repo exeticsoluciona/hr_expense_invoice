@@ -52,13 +52,12 @@ class HRExpenseInvoiceCrearGasto(models.TransientModel):
     def action_crear_gasto(self):
         active_ids = self.env.context.get('active_ids')
 
-        for f in self.env['account.move'].browse(active_ids):
-            exp = f.crear_gasto(self.empleado_id.id)
+        facturas = self.env['account.move'].browse(active_ids)
+        gastos = facturas.crear_gasto(self.empleado_id.id)
 
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'hr.expense',
-                'view_mode': 'form',
-                'res_id': exp.id,
-                'views': [(False, 'form')],
-            }
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.expense',
+            'domain': [['id','in',gastos.ids]],
+            'views': [(False, 'tree')],
+        }
