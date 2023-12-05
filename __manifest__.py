@@ -13,6 +13,7 @@
     'data': [
         'views/hr_expense_views.xml',
         'views/account_move_views.xml',
+        'security/hr_expense_invoice_security.xml',
         'security/ir.model.access.csv',
     ],
     'qweb': [
