@@ -1,2 +1,6 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_hr_expense_invoice_crear_gasto,access_hr_expense_invoice_crear_gasto,hr_expense_invoice.model_hr_expense_invoice_crear_gasto,account.group_account_invoice,1,1,1,1
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_hr_expense_invoice_crear_gasto","access_hr_expense_invoice_crear_gasto","hr_expense_invoice.model_hr_expense_invoice_crear_gasto","account.group_account_invoice",1,1,1,1
+"access_hr_expense_invoice_crear_gasto_empleado","access_hr_expense_invoice_crear_gasto_empleado","hr_expense_invoice.model_hr_expense_invoice_crear_gasto","hr_expense_invoice.group_hr_expense_invoice_crear_factura",1,1,1,1
+"access_hr_expense_invoice_crear_factura_empleado","access_hr_expense_invoice_crear_factura_empleado","account.model_account_move","hr_expense_invoice.group_hr_expense_invoice_crear_factura",1,1,1,1
+"access_hr_expense_invoice_crear_asiento_empleado","access_hr_expense_invoice_crear_asiento_empleado","account.model_account_move_line","hr_expense_invoice.group_hr_expense_invoice_crear_factura",1,1,1,1
+"access_hr_expense_invoice_crear_partial_empleado","access_hr_expense_invoice_crear_partial_empleado","account.model_account_partial_reconcile","hr_expense_invoice.group_hr_expense_invoice_crear_factura",1,1,1,1
