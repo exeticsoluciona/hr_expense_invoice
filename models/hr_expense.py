@@ -70,7 +70,7 @@ class HrExpenseSheet(models.Model):
                 'ref': g.reference,
                 'partner_id': g.employee_id.sudo().address_home_id.commercial_partner_id.id,
                 'debit': 0,
-                'credit': g.total_amount,
+                'credit': g.total_amount_company,
                 'account_id': g.account_id.id,
             }))
 
