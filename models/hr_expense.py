@@ -74,9 +74,15 @@ class HrExpenseSheet(models.Model):
                 'account_id': g.account_id.id,
             }))
 
-        diario = self.env['account.journal'].search([('type','=','general')])
+        diarios = self.env['account.journal'].search([('type','=','general')])
+        misc = diarios.filtered(lambda r: r.code == 'MISC')
+        
+        diario = diarios[0]
+        if len(misc) > 0:
+            diario = misc[0]
+            
         movimiento = self.env['account.move'].create({
-            'journal_id': diario[0].id,
+            'journal_id': diario.id,
             'date': self.accounting_date,
             'ref': 'Conciliacion manual: '+self.name,
             'move_type': 'entry',
