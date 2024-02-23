@@ -30,10 +30,6 @@ class AccountMove(models.Model):
                     'employee_id': empleado_id,
                     'factura_id': f.id,
                     'product_id': productos[0].id,
-                    'unit_amount': 0,
-                    'total_amount': 0,
-                    'product_uom_id': self.env['uom.uom'].search([], limit=1, order='id').id,
-                    'currency_id': f.currency_id.id
                 };
                 
                 exp = Expense.create(values);
@@ -56,8 +52,10 @@ class HRExpenseInvoiceCrearGasto(models.TransientModel):
         gastos = facturas.crear_gasto(self.empleado_id.id)
 
         return {
+            'name': _('Gasto'),
             'type': 'ir.actions.act_window',
             'res_model': 'hr.expense',
-            'domain': [['id','in',gastos.ids]],
-            'views': [(False, 'tree')],
+            'context': {'create': False},
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', gastos.ids)],
         }
