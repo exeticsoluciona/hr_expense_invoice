@@ -18,7 +18,7 @@ class HrExpense(models.Model):
                 self.tax_ids = [Command.clear()]
                 self.currency_id = self.factura_id.currency_id
                 self.total_amount_currency = self.factura_id.amount_total
-                self.currency_rate = 1 / self.factura_id.invoice_line_ids.currency_rate 
+                self.currency_rate = 1 / max([l.currency_rate for l in self.factura_id.invoice_line_ids])
             else:
                 self.factura_id = False
                 return {
