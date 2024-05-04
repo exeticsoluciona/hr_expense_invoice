@@ -9,6 +9,7 @@
     'description': """ Cambios a gastos para unirlas a facturas """,
     'website': 'http://aquih.com',
     'author': 'Rodrigo Fernandez',
+    "license": "AGPL-3",
     'depends': ['hr_expense'],
     'data': [
         'views/hr_expense_views.xml',
